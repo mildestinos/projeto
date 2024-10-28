@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Poker Texas Hold'em</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #2b7a3d;
+            margin: 0;
+            padding: 10px;
+            color: #fff;
+            min-height: 100vh;
+        }
+        .main-container {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            border: 2px solid #ccc;
+            border-radius: 15px;
+            padding: 20px;
+            background-color: #1c5a2e;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .cards-container {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .card {
+            width: 55px;
+            height: 80px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            background-color: #fff;
+            color: black;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .card.highlight {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px 2px #FFD700;
+        }
+        .hearts, .diamonds {
+            color: red;
+        }
+        button {
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #006400;
+            border: 2px solid #444;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.4);
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #008000;
+        }
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        #explanation, #suggestions {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 16px;
+            color: #FFD700;
+            max-width: 300px;
+        }
+        .sidebar {
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            color: #FFD700;
+        }
+        .sidebar h4 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+        .catalogo {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+            color: #FFD700;
+            text-align: left;
+            background-color: #1c5a2e;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+        .catalogo h3 {
+            font-size: 20px;
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+        .catalogo ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .catalogo li {
+            margin-bottom: 15px;
+        }
+        .catalogo li strong {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        footer {
+            margin-top: auto;
+            padding: 10px;
+            font-size: 14px;
+            color: #FFD700;
+            text-align: center;
+            width: 100%;
+            background-color: #1c5a2e;
+            border-top: 1px solid #333;
+        }
+        @media (min-width: 600px) {
+            .main-container {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+            .sidebar {
+                width: 200px;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <!-- Sidebar com sugestões -->
+    <div class="sidebar">
+        <h4>Cartas Interessantes</h4>
+        <div id="suggestions">As cartas que podem melhorar sua mão aparecerão aqui.</div>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <div style="width: 100%; max-width: 600px;">
+        <h3>Cartas Comunitárias</h3>
+        <div id="community-cards" class="cards-container"></div>
+
+        <div id="controls">
+            <button id="deal-flop">Distribuir Flop (3 cartas)</button>
+            <button id="deal-turn" disabled>Distribuir Turn (4ª carta)</button>
+            <button id="deal-river" disabled>Distribuir River (5ª carta)</button>
+            <button id="reset-game">Reiniciar Jogo</button>
+        </div>
+
+        <div id="explanation">Clique em "Distribuir Flop" para exibir as 3 primeiras cartas comunitárias.</div>
+
+        <h3>Suas Cartas</h3>
+        <div id="player-cards" class="cards-container"></div>
+    </div>
+</div>
+
+<!-- Catálogo de Jogadas -->
+<div class="catalogo">
+    <h3>Catálogo de Jogadas</h3>
+    <ul>
+        <li><strong>Par:</strong> Duas cartas com o mesmo valor. Exemplo: 5♠ 5♥</li>
+        <li><strong>Dois Pares:</strong> Duas combinações de cartas com valores iguais. Exemplo: 8♠ 8♦ e 3♣ 3♠</li>
+        <li><strong>Trinca:</strong> Três cartas com o mesmo valor. Exemplo: K♠ K♦ K♣</li>
+        <li><strong>Sequência (Straight):</strong> Cinco cartas em ordem sequencial, mas de naipes diferentes. Exemplo: 4♠ 5♣ 6♥ 7♦ 8♠</li>
+        <li><strong>Flush:</strong> Cinco cartas do mesmo naipe, mas não em sequência. Exemplo: 2♠ 6♠ 9♠ Q♠ K♠</li>
+        <li><strong>Full House:</strong> Uma trinca e um par. Exemplo: J♠ J♣ J♦ 4♠ 4♥</li>
+        <li><strong>Quadra:</strong> Quatro cartas com o mesmo valor. Exemplo: 9♠ 9♣ 9♦ 9♥</li>
+        <li><strong>Straight Flush:</strong> Cinco cartas em sequência e do mesmo naipe. Exemplo: 5♣ 6♣ 7♣ 8♣ 9♣</li>
+        <li><strong>Royal Flush:</strong> Sequência do 10 ao Ás do mesmo naipe. Exemplo: 10♥ J♥ Q♥ K♥ A♥</li>
+    </ul>
+</div>
+
+<footer>
+    Autor: Eric Vieira
+</footer>
+
+<script>
+    const playerCardsContainer = document.getElementById('player-cards');
+    const communityCardsContainer = document.getElementById('community-cards');
+    const explanation = document.getElementById('explanation');
+    const suggestions = document.getElementById('suggestions');
+    const dealFlopButton = document.getElementById('deal-flop');
+    const dealTurnButton = document.getElementById('deal-turn');
+    const dealRiverButton = document.getElementById('deal-river');
+    const resetGameButton = document.getElementById('reset-game');
+
+    let deck = [];
+    let playerHand = [];
+
+    // Inicializa o baralho e embaralha
+    function initializeDeck() {
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        deck = [];
+        suits.forEach(suit => {
+            values.forEach(value => {
+                deck.push(value + suit);
+            });
+        });
+        shuffle(deck);
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function resetGame() {
+        communityCardsContainer.innerHTML = '';
+        playerCardsContainer.innerHTML = '';
+        explanation.innerText = 'Clique em "Distribuir Flop" para exibir as 3 primeiras cartas comunitárias.';
+        suggestions.innerText = 'As cartas que podem melhorar sua mão aparecerão aqui.';
+        initializeDeck();
+        distributePlayerHand();
+
+        dealFlopButton.disabled = false;
+        dealTurnButton.disabled = true;
+        dealRiverButton.disabled = true;
+    }
+
+    function distributePlayerHand() {
+        playerHand = deck.splice(0, 2);
+        playerHand.forEach(cardValue => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.innerText = cardValue;
+            playerCardsContainer.appendChild(card);
+        });
+    }
+
+    function dealCommunityCards(number) {
+        const communityHand = deck.splice(0, number);
+        communityHand.forEach(cardValue => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.innerText = cardValue;
+            communityCardsContainer.appendChild(card);
+        });
+    }
+
+    function checkBestHand() {
+        const allCards = [...playerHand, ...[...communityCardsContainer.children].map(card => card.innerText)];
+        const bestHand = identifyBestHand(allCards);
+        
+        explanation.innerText = `Você tem: ${bestHand.name}.`;
+    }
+
+    function identifyBestHand(cards) {
+        const valuesOnly = cards.map(card => card.slice(0, -1));
+        const counts = {};
+        valuesOnly.forEach(value => counts[value] = (counts[value] || 0) + 1);
+
+        const pairs = Object.values(counts).filter(count => count === 2).length;
+        const threes = Object.values(counts).filter(count => count === 3).length;
+        const fours = Object.values(counts).filter(count => count === 4).length;
+
+        if (fours) return { name: 'uma Quadra' };
+        if (threes && pairs) return { name: 'um Full House' };
+        if (threes) return { name: 'uma Trinca' };
+        if (pairs === 2) return { name: 'Dois Pares' };
+        if (pairs === 1) return { name: 'um Par' };
+        return { name: 'nenhuma combinação especial' };
+    }
+
+    dealFlopButton.addEventListener('click', () => {
+        dealCommunityCards(3);
+        explanation.innerText = "O Flop foi distribuído. Estas são as 3 primeiras cartas comunitárias.";
+        dealFlopButton.disabled = true;
+        dealTurnButton.disabled = false;
+    });
+
+    dealTurnButton.addEventListener('click', () => {
+        dealCommunityCards(1);
+        explanation.innerText = "O Turn foi distribuído. Esta é a 4ª carta comunitária.";
+        dealTurnButton.disabled = true;
+        dealRiverButton.disabled = false;
+    });
+
+    dealRiverButton.addEventListener('click', () => {
+        dealCommunityCards(1);
+        explanation.innerText = "O River foi distribuído. Esta é a 5ª carta comunitária.";
+        checkBestHand();
+        dealRiverButton.disabled = true;
+    });
+
+    resetGameButton.addEventListener('click', resetGame);
+
+    initializeDeck();
+    distributePlayerHand();
+
+</script>
+
+</body>
+</html>
